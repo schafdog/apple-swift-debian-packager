@@ -43,13 +43,14 @@ if [[ "$TYPE" != *"gzip compressed data"* ]] ; then
 #    rm $FILE
     exit 1
 fi
-mkdir -p apple-$BRANCH
-mkdir -p apple-$BRANCH/DEBIAN
-mkdir -p apple-$BRANCH/usr/local
+
+BUILD_DIR=apple-${BRANCH}-${BUILD}
+mkdir -p $BUILD_DIR/DEBIAN
+mkdir -p $BUILD_DIR/usr/local
 export RELEASE=$REL BUILD
-envsubst < control > apple-$BRANCH/DEBIAN/control
+envsubst < control > $BUILD_DIR/DEBIAN/control
 tar -xvz -f $FILE
-rsync -Hav $FILENAME/usr/  apple-$BRANCH/usr/local
-dpkg-deb -b apple-$BRANCH
-rm -rf apple-$BRANCH
+rsync -Hav $FILENAME/usr/  $BUILD_DIR/usr/local
+dpkg-deb -b $BUILD_DIR
+rm -rf $BUILD_DIR
 rm -rf ${FILE/.tar.gz/}
