@@ -31,9 +31,9 @@ else
     wget $URL
 fi
 TYPE=`file $FILE`
-if [[ "gzip compressed data" != *TYPE* ]] ; then
+if [[ "$TYPE" != *"gzip compressed data"* ]] ; then
     echo "$FILE is not a gz. Exiting"
-    rm $FILE
+#    rm $FILE
     exit 1
 fi
 mkdir -p apple-$BRANCH
@@ -43,3 +43,5 @@ cp control apple-$BRANCH/DEBIAN
 tar -xvz -f $FILE
 rsync -Hav $FILENAME/usr/  apple-$BRANCH/usr/local
 dpkg-deb -b apple-$BRANCH
+rm -rf apple-$BRANCH
+rm -rf ${FILE/.tar.gz/}
