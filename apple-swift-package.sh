@@ -1,9 +1,16 @@
 #!/bin/bash
 
 REL=$1
+BUILD=1
+if [ "$2" != "" ] ; then
+    BUILD=$2
+fi
+
 OS=ubuntu2004
 OSF=ubuntu20.04
 if [ "$REL" == "" ] ; then
+    echo Not working for SNAPSHOT
+    exit
     SNAPSHOT=DEVELOPMENT-SNAPSHOT
     DATE=`date +"%s"`
     EPOCH_YDAY=`echo $DATE-3600*48| bc `
@@ -39,7 +46,9 @@ fi
 mkdir -p apple-$BRANCH
 mkdir -p apple-$BRANCH/DEBIAN
 mkdir -p apple-$BRANCH/usr/local
-cp control apple-$BRANCH/DEBIAN
+export RELEASE=$REL BUILD
+envsubst < control > apple-$BRANCH/DEBIAN/control
+exit
 tar -xvz -f $FILE
 rsync -Hav $FILENAME/usr/  apple-$BRANCH/usr/local
 dpkg-deb -b apple-$BRANCH
