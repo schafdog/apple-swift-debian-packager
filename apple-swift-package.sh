@@ -48,7 +48,6 @@ mkdir -p apple-$BRANCH/DEBIAN
 mkdir -p apple-$BRANCH/usr/local
 export RELEASE=$REL BUILD
 envsubst < control > apple-$BRANCH/DEBIAN/control
-exit
 tar -xvz -f $FILE
 rsync -Hav $FILENAME/usr/  apple-$BRANCH/usr/local
 dpkg-deb -b apple-$BRANCH
