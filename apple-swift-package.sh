@@ -43,6 +43,7 @@ if [[ "$TYPE" != *"gzip compressed data"* ]] ; then
 #    rm $FILE
     exit 1
 fi
+
 if [ -d  "apple-$BRANCH" ] ; then
     echo "apple-$BRANCH  exist"
 else
