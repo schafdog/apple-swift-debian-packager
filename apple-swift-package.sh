@@ -6,8 +6,8 @@ if [ "$2" != "" ] ; then
     BUILD=$2
 fi
 
-OS=ubuntu2004
-OSF=ubuntu20.04
+OS=ubuntu2204
+OSF=ubuntu22.04
 if [ "$REL" == "" ] ; then
     echo Not working for SNAPSHOT
     exit
@@ -43,13 +43,27 @@ if [[ "$TYPE" != *"gzip compressed data"* ]] ; then
 #    rm $FILE
     exit 1
 fi
-mkdir -p apple-$BRANCH
-mkdir -p apple-$BRANCH/DEBIAN
-mkdir -p apple-$BRANCH/usr/local
-export RELEASE=$REL BUILD
-envsubst < control > apple-$BRANCH/DEBIAN/control
-tar -xvz -f $FILE
-rsync -Hav $FILENAME/usr/  apple-$BRANCH/usr/local
-dpkg-deb -b apple-$BRANCH
-rm -rf apple-$BRANCH
-rm -rf ${FILE/.tar.gz/}
+if [ -d  "apple-$BRANCH" ] ; then
+    echo "apple-$BRANCH  exist"
+else
+    mkdir -p apple-$BRANCH
+    mkdir -p apple-$BRANCH/DEBIAN
+    mkdir -p apple-$BRANCH/usr/local
+    export RELEASE=$REL BUILD
+    envsubst < control > apple-$BRANCH/DEBIAN/control
+    tar -xvz -f $FILE
+    rsync -Hav $FILENAME/usr/  apple-$BRANCH/usr/local
+fi
+if [ -f apple-$BRANCH-$BUILD.deb ] ; then
+    echo "apple-$BRANCH-$BUILD.deb exists"
+else
+    dpkg-deb -b apple-$BRANCH apple-$BRANCH-$BUILD.deb
+fi
+if [ "$CLEANUP" == "yes" ] ; then
+    rm -rf apple-$BRANCH
+    rm -rf ${FILE/.tar.gz/}
+fi
+cp apple-$BRANCH-$BUILD.deb /usr/local/debs/amd64/
+pushd /usr/local/debs
+dpkg-scanpackages --multiversion amd64 override > amd64/Packages
+popd
