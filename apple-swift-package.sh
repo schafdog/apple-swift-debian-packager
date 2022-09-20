@@ -5,9 +5,9 @@ BUILD=1
 if [ "$2" != "" ] ; then
     BUILD=$2
 fi
-
-OS=ubuntu2204
-OSF=ubuntu22.04
+YEAR=20
+OS=ubuntu${YEAR}04
+OSF=ubuntu${YEAR}.04
 if [ "$REL" == "" ] ; then
     echo Not working for SNAPSHOT
     exit
