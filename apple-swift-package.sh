@@ -9,17 +9,19 @@ YEAR=20
 OS=ubuntu${YEAR}04
 OSF=ubuntu${YEAR}.04
 if [ "$REL" == "" ] ; then
-    echo Not working for SNAPSHOT
-    exit
-    SNAPSHOT=DEVELOPMENT-SNAPSHOT
+    SNAPSHOT=LOCAL
     DATE=`date +"%s"`
-    EPOCH_YDAY=`echo $DATE-3600*48| bc `
+    EPOCH_YDAY=`echo $DATE-0| bc `
     YDAY=`epoch $EPOCH_YDAY | cut -b 1-10`
     echo $YDAY
-    FILENAME="$BRANCH-$SNAPSHOT-$YDAY-a-$OSF"
-    BRANCH=swift-5.7
+    FILENAME="$BRANCH-$SNAPSHOT-$YDAY-a-linux"
+    echo $FILENAME
+    TAR_OPT="--directory=$FILENAME"
     BRANCH_DIR=$BRANCH-$SNAPSHOT-$YDAY-a
     BRANCH_REL=$BRANCH-branch
+    REL=5.8-$YDAY
+    BRANCH=swift-$REL
+    
 else
     BRANCH=swift-$REL
     BRANCH_DIR=${BRANCH}-RELEASE
@@ -28,13 +30,13 @@ else
 fi
 
 FILE="$FILENAME.tar.gz"
-#https://download.swift.org/swift-5.7-release/ubuntu2004/swift-5.7-RELEASE/swift-5.7-RELEASE-ubuntu20.04.tar.gz
-URL=https://download.swift.org/$BRANCH_REL/$OS/$BRANCH_DIR/$FILE
-echo $URL
 
 if [ -f $FILE ] ; then 
-    echo "File exist"
+    echo "File $FILE exist"
 else
+    #https://download.swift.org/swift-5.7-release/ubuntu2004/swift-5.7-RELEASE/swift-5.7-RELEASE-ubuntu20.04.tar.gz
+    URL=https://download.swift.org/$BRANCH_REL/$OS/$BRANCH_DIR/$FILE
+    echo "Downloading $URL"
     wget $URL
 fi
 TYPE=`file $FILE`
@@ -44,17 +46,24 @@ if [[ "$TYPE" != *"gzip compressed data"* ]] ; then
     exit 1
 fi
 
+if [ -d "$FILENAME" ] ; then
+    echo "Directory $FILENAME exist. Skipping tar extract"
+else
+    mkdir -p $FILENAME
+    tar -xvz -f $FILE $TAR_OPT
+fi
+
 if [ -d  "apple-$BRANCH" ] ; then
-    echo "apple-$BRANCH  exist"
+    echo "apple-$BRANCH exist"
 else
     mkdir -p apple-$BRANCH
     mkdir -p apple-$BRANCH/DEBIAN
     mkdir -p apple-$BRANCH/usr/local
-    export RELEASE=$REL BUILD
-    envsubst < control > apple-$BRANCH/DEBIAN/control
-    tar -xvz -f $FILE
-    rsync -Hav $FILENAME/usr/  apple-$BRANCH/usr/local
 fi
+rsync -Hav $FILENAME/usr/  apple-$BRANCH/usr/local
+export RELEASE=$REL BUILD
+echo "Release info $RELEASE $REL $BUILD" 
+envsubst < control > apple-$BRANCH/DEBIAN/control
 if [ -f apple-$BRANCH-$BUILD.deb ] ; then
     echo "apple-$BRANCH-$BUILD.deb exists"
 else
