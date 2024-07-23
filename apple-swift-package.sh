@@ -1,14 +1,15 @@
 #!/bin/bash
-
 REL=$1
-BUILD=1
+PLATFORM=debian12
+
 if [ "$2" != "" ] ; then
     BUILD=$2
 fi
-YEAR=22
+YEAR=24
 MONTH=04
-OS=ubuntu${YEAR}${MONTH}
-OSF=ubuntu${YEAR}.${MONTH}
+SWIFT_BRANCH=${1}-${PLATFORM}-RELEASE
+OS=${PLATFORM}
+OSF=${PLATFORM}
 if [ "$REL" == "" ] ; then
     SNAPSHOT=LOCAL
     DATE=`date +"%s"`
@@ -22,8 +23,8 @@ if [ "$REL" == "" ] ; then
     BRANCH_REL=$BRANCH-branch
     REL=5.8-$YDAY
     BRANCH=swift-$REL
-    
 else
+    # https://download.swift.org/swift-5.10.1-release/debian12/swift-5.10.1-RELEASE/swift-5.10.1-RELEASE-debian12.tar.gz
     BRANCH=swift-$REL
     BRANCH_DIR=${BRANCH}-RELEASE
     FILENAME="${BRANCH_DIR}-$OSF"
