@@ -5,3 +5,4 @@ apple-swift-5.*/
 swift-5.*-RELEASE-ubuntu2*.04/
 swift-LOCAL-*/
 debian/
+.DS_Store
