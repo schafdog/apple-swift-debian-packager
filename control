@@ -1,6 +1,6 @@
 Package: apple-swift
 Version: $RELEASE-$BUILD
-Architecture: amd64
+Architecture: $ARCH
 Depends: 
 Maintainer: Dennis Schafroth <dennis@schafroth.com>
 Description: Debian Package of the Apple Swift Language Toolchain

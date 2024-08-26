@@ -1,44 +1,29 @@
 #!/bin/bash
-
 REL=$1
-BUILD=1
-if [ "$2" != "" ] ; then
-    BUILD=$2
-fi
-DIST=debian
-DIST_VER=12
-OS=${DIST}${DIST_VER}
-OSF=${DIST}${DIST_VER}
-if [ "$REL" == "" ] ; then
-    SNAPSHOT=LOCAL
-    DATE=`date +"%s"`
-    EPOCH_YDAY=`echo $DATE-0| bc `
-    YDAY=`epoch $EPOCH_YDAY | cut -b 1-10`
-    echo $YDAY
-    FILENAME="$BRANCH-$SNAPSHOT-$YDAY-a-linux"
-    echo $FILENAME
-    TAR_OPT="--directory=$FILENAME"
-    BRANCH_DIR=$BRANCH-$SNAPSHOT-$YDAY-a
-    BRANCH_REL=$BRANCH-branch
-    REL=5.8-$YDAY
-    BRANCH=swift-$REL
-    
-else
-    BRANCH=swift-$REL
-    BRANCH_DIR=${BRANCH}-RELEASE
-    FILENAME="${BRANCH_DIR}-$OSF"
-    BRANCH_REL=$BRANCH-release
+BUILD=$2
+ARCH=$3
+: ${ARCH:=amd64}
+: ${SWIFT_PLATFORM:=debian12}
+OS_VER=$SWIFT_PLATFORM
+
+if [ "$ARCH" != "x86_64" ] ;  then
+    OS_ARCH_SUFFIX=-$ARCH
 fi
 
-FILE="$FILENAME.tar.gz"
+SWIFT_BRANCH=swift-${REL}-release
+SWIFT_VERSION=swift-${REL}-RELEASE
+SWIFT_WEBROOT=https://download.swift.org
+APPLE_SWIFT_BUILD=apple-swift-${REL}-${OS_VER}${OS_ARCH_SUFFIX}
+
+SWIFT_WEBDIR="$SWIFT_WEBROOT/$SWIFT_BRANCH/$(echo $SWIFT_PLATFORM | tr -d .)$OS_ARCH_SUFFIX"
+SWIFT_BIN_URL="$SWIFT_WEBDIR/$SWIFT_VERSION/$SWIFT_VERSION-$SWIFT_PLATFORM$OS_ARCH_SUFFIX.tar.gz"
+FILE="$SWIFT_VERSION-$SWIFT_PLATFORM$OS_ARCH_SUFFIX.tar.gz"
 
 if [ -f $FILE ] ; then 
     echo "File $FILE exist"
 else
-# https://download.swift.org/swift-5.10.1-release/debian12/swift-5.10.1-RELEASE/swift-5.10.1-RELEASE-debian12.tar.gz
-    URL=https://download.swift.org/$BRANCH_REL/$OS/$BRANCH_DIR/$FILE
-    echo "Downloading $URL"
-    wget $URL
+    echo "Downloading $SWIFT_BIN_URL"
+    wget $SWIFT_BIN_URL || exit
 fi
 TYPE=`file $FILE`
 if [[ "$TYPE" != *"gzip compressed data"* ]] ; then
@@ -46,6 +31,7 @@ if [[ "$TYPE" != *"gzip compressed data"* ]] ; then
 #    rm $FILE
     exit 1
 fi
+FILENAME=$SWIFT_VERSION-$SWIFT_PLATFORM${OS_ARCH_SUFFIX}
 
 if [ -d "$FILENAME" ] ; then
     echo "Directory $FILENAME exist. Skipping tar extract"
@@ -54,27 +40,31 @@ else
     tar -xvz -f $FILE $TAR_OPT
 fi
 
-if [ -d  "apple-$BRANCH" ] ; then
-    echo "apple-$BRANCH exist"
+mkdir -p ${APPLE_SWIFT_BUILD}/DEBIAN
+mkdir -p ${APPLE_SWIFT_BUILD}/usr/local
+
+rsync -Hav $FILENAME/usr/  ${APPLE_SWIFT_BUILD}/usr/local || exit
+export RELEASE=$REL-$SWIFT_PLATFORM BUILD ARCH
+echo "Release info $RELEASE $REL $BUILD"
+envsubst < control > ${APPLE_SWIFT_BUILD}/DEBIAN/control
+
+if [ -f $APPLE_SWIFT_BUILD-$BUILD.deb ] ; then
+    echo "$APPLE_SWIFT_BUILD-$BUILD.deb exists"
 else
-    mkdir -p apple-$BRANCH
-    mkdir -p apple-$BRANCH/DEBIAN
-    mkdir -p apple-$BRANCH/usr/local
-fi
-rsync -Hav $FILENAME/usr/  apple-$BRANCH/usr/local
-export RELEASE=$REL BUILD
-echo "Release info $RELEASE $REL $BUILD" 
-envsubst < control > apple-$BRANCH/DEBIAN/control
-if [ -f apple-$BRANCH-$BUILD.deb ] ; then
-    echo "apple-$BRANCH-$BUILD.deb exists"
-else
-    dpkg-deb -b apple-$BRANCH apple-$BRANCH-$BUILD.deb
+    dpkg-deb -b $APPLE_SWIFT_BUILD $APPLE_SWIFT_BUILD-$BUILD.deb
 fi
 if [ "$CLEANUP" == "yes" ] ; then
-    rm -rf apple-$BRANCH
-    rm -rf ${FILE/.tar.gz/}
+    rm -rf ${FILE}
+    rm -rf ${FILENAME}
+    rm -rf $APPLE_SWIFT_BUILD
 fi
-cp apple-$BRANCH-$BUILD.deb /usr/local/debs/amd64/
-pushd /usr/local/debs
-dpkg-scanpackages --multiversion amd64 override > amd64/Packages
-popd
+if [ "$skip_repo" != "yes" ] ; then
+    # Move to repo
+    cp $APPLE_SWIFT_BUILD-$BUILD.deb /usr/local/debs/$ARCH/
+    pushd /usr/local/debs
+    dpkg-scanpackages --multiversion $ARCH override > $ARCH/Packages
+    popd
+    if [ "$CLEANUP" == "yes" ] ; then
+	rm $APPLE_SWIFT_BUILD-$BUILD.deb
+    fi
+fi
