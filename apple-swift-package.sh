@@ -5,9 +5,10 @@ BUILD=1
 if [ "$2" != "" ] ; then
     BUILD=$2
 fi
-YEAR=20
-OS=ubuntu${YEAR}04
-OSF=ubuntu${YEAR}.04
+DIST=debian
+DIST_VER=12
+OS=${DIST}${DIST_VER}
+OSF=${DIST}${DIST_VER}
 if [ "$REL" == "" ] ; then
     SNAPSHOT=LOCAL
     DATE=`date +"%s"`
@@ -34,7 +35,7 @@ FILE="$FILENAME.tar.gz"
 if [ -f $FILE ] ; then 
     echo "File $FILE exist"
 else
-    #https://download.swift.org/swift-5.7-release/ubuntu2004/swift-5.7-RELEASE/swift-5.7-RELEASE-ubuntu20.04.tar.gz
+# https://download.swift.org/swift-5.10.1-release/debian12/swift-5.10.1-RELEASE/swift-5.10.1-RELEASE-debian12.tar.gz
     URL=https://download.swift.org/$BRANCH_REL/$OS/$BRANCH_DIR/$FILE
     echo "Downloading $URL"
     wget $URL
