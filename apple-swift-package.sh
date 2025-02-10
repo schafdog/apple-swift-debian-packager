@@ -6,7 +6,7 @@ ARCH=$3
 : ${SWIFT_PLATFORM:=debian12}
 OS_VER=$SWIFT_PLATFORM
 
-if [ "$ARCH" != "x86_64" ] ;  then
+if [ "$ARCH" != "amd64" ] ;  then
     OS_ARCH_SUFFIX=-$ARCH
 fi
 
