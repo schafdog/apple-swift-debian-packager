@@ -51,7 +51,7 @@ envsubst < control > ${APPLE_SWIFT_BUILD}/DEBIAN/control
 if [ -f $APPLE_SWIFT_BUILD-$BUILD.deb ] ; then
     echo "$APPLE_SWIFT_BUILD-$BUILD.deb exists"
 else
-    dpkg-deb -b $APPLE_SWIFT_BUILD $APPLE_SWIFT_BUILD-$BUILD.deb
+    dpkg-deb --root-owner-group -b $APPLE_SWIFT_BUILD $APPLE_SWIFT_BUILD-$BUILD.deb
 fi
 if [ "$CLEANUP" == "yes" ] ; then
     rm -rf ${FILE}
