@@ -1,8 +1,7 @@
 *~
 *.deb
 *.gz
-apple-swift-5.*/
-swift-5.*-RELEASE-ubuntu2*.04/
-swift-LOCAL-*/
+apple-swift-*/
+swift-*/
 debian/
 .DS_Store
