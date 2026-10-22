@@ -1,8 +1,3 @@
-if [[ "$1" == "" ]] ; then
-    echo "$0 VERSION [RELEASE|SNAPSHOT [ARCH]]"
-    echo "Override OS by OS_VER. Defaults to debian12. Others: ubuntu24.04, ubi9 (Redhat), fedora41"
-    exit
-fi
 #!/bin/bash
 REL=$1
 BUILD=$2
@@ -11,6 +6,11 @@ ARCH=$3
 : ${ARCH:=amd64}
 : ${OS_VER:=debian13}
 
+if [[ "$REL" == "" ]] ; then
+    echo "$0 VERSION [RELEASE|SNAPSHOT [ARCH]]"
+    echo "Override OS by OS_VER. Defaults to $OS_VER. Others: ubuntu24.04, ubi9 (Redhat), fedora41"
+    exit
+fi
 
 if [ "$ARCH" != "amd64" ] ;  then
     OS_ARCH_SUFFIX=-$ARCH
@@ -46,10 +46,18 @@ else
     tar -xvz -f $FILE $TAR_OPT
 fi
 
+: ${PREFIX:=/opt/apple-swift}
 mkdir -p ${APPLE_SWIFT_BUILD}/DEBIAN
-mkdir -p ${APPLE_SWIFT_BUILD}/usr/local
+mkdir -p ${APPLE_SWIFT_BUILD}${PREFIX}
+mkdir -p ${APPLE_SWIFT_BUILD}/usr/local/bin
 
-rsync -Hav $FILENAME/usr/  ${APPLE_SWIFT_BUILD}/usr/local || exit
+# Swift Build (default build system from 6.4) requires the toolchain to live in <root>/usr,
+# so keep the usr/ layout under PREFIX and symlink the tools into /usr/local/bin
+rsync -Hav $FILENAME/usr/  ${APPLE_SWIFT_BUILD}${PREFIX}/usr || exit
+for f in ${APPLE_SWIFT_BUILD}${PREFIX}/usr/bin/* ; do
+    ln -sf ${PREFIX}/usr/bin/$(basename $f) ${APPLE_SWIFT_BUILD}/usr/local/bin/
+done
+
 export RELEASE=$REL-$OS_VER BUILD ARCH
 echo "Release info $RELEASE $REL $BUILD"
 envsubst < control > ${APPLE_SWIFT_BUILD}/DEBIAN/control
